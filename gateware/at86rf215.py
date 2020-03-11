@@ -12,17 +12,12 @@ class Blinky(Elaboratable):
         led2  = platform.request("led", 1)
         sync_i = platform.request("sync_i", 0)
         sync_q = platform.request("sync_q", 0)
-        rxclk = platform.request("rxclk", 0)
         rxd24 = platform.request("rxd24", 0)
         rxd24_delay = Signal()
         rxd24_data = Signal(2)
-        # TODO: find out how to get the actual reset signal
-        rst = Signal()
         timer = Signal(20)
 
         m = Module()
-        m.domains.sync = ClockDomain()
-        m.d.comb += ClockSignal().eq(rxclk)
         m.submodules += [
             Instance("DELAYG",
                 p_DEL_MODE="SCLK_CENTERED",
@@ -31,8 +26,8 @@ class Blinky(Elaboratable):
             ),
             Instance("IDDRX1F",
                 i_D=rxd24_delay,
-                i_SCLK=rxclk,
-                i_RST=rst,
+                i_SCLK=ClockSignal(),
+                i_RST=Const(0),
                 o_Q0=rxd24_data[1],
                 o_Q1=rxd24_data[0],
             ),
@@ -79,6 +74,7 @@ class Blinky(Elaboratable):
 
 if __name__ == "__main__":
     platform = ECP55GEVNPlatform()
+    platform.default_clk = "rxclk"
     resources = [
         Resource("rxclk", 0, DiffPairs("F2", "E2", dir="i"), Attrs(IO_TYPE="LVDS", DIFFRESISTOR="100")),
         Resource("rxd24", 0, DiffPairs("G3", "F3", dir="i"), Attrs(IO_TYPE="LVDS", DIFFRESISTOR="100")),
